@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/suhu_provider.dart';
 import '../widgets/hasil_item.dart';
 
@@ -10,6 +11,7 @@ class KonversiSuhuPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final suhu = context.watch<SuhuProvider>();
+    final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
       appBar: AppBar(
@@ -17,6 +19,28 @@ class KonversiSuhuPage extends StatelessWidget {
         centerTitle: true,
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
+        actions: [
+          if (user != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Center(
+                child: Text(
+                  user.email?.split('@').first ?? 'User',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ),
+            ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              if (context.mounted) {
+                Navigator.pushReplacementNamed(context, '/');
+              }
+            },
+            tooltip: 'Logout',
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -52,16 +76,16 @@ class KonversiSuhuPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 15),
                   DropdownButtonFormField<String>(
-                    initialValue: suhu.satuanInput,
+                    initialValue: suhu.satuanInput, // ← PERBAIKI: value diganti initialValue
                     decoration: const InputDecoration(
                       labelText: 'Pilih satuan',
                       border: OutlineInputBorder(),
                     ),
                     items: ['Celcius', 'Fahrenheit', 'Kelvin', 'Reamur']
                         .map((item) => DropdownMenuItem(
-                      value: item,
-                      child: Text(item),
-                    ))
+                              value: item,
+                              child: Text(item),
+                            ))
                         .toList(),
                     onChanged: (value) {
                       context.read<SuhuProvider>().setSatuan(value!);
@@ -70,9 +94,7 @@ class KonversiSuhuPage extends StatelessWidget {
                 ],
               ),
             ),
-
             const SizedBox(height: 30),
-
             // Hasil
             Expanded(
               child: ListView(
